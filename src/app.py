@@ -1,38 +1,101 @@
-'''Simple Streamlit web app.'''
 import pickle
 import pandas as pd
 import streamlit as st
 
-# Load the model
-model_file='../models/model.pkl'
+# Load the trained model
+model_file = '../models/model.pkl'
 
 with open(model_file, 'rb') as input_file:
-    model=pickle.load(input_file)
+    model = pickle.load(input_file)
 
-# Dictionary to translate numerical predictions into
-# human readable strings
-class_dict={
-    '0': 'Not diabetic',
-    '1': 'Diabetic'
+# Dictionary for translating predictions
+class_dict = {
+    0: 'Not diabetic',
+    1: 'Diabetic'
 }
 
-# Page title
-st.title('Diabetes prediction')
+# Page Configuration
+st.set_page_config(
+    page_title="Diabetes Prediction App",
+    page_icon="🩺",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# Set up inputs for the user to enter data - take a look at the tutorial
-# for a hint on how to do this. Also, if you are using the model
-# supplied above, you need to send it four features: Glucose,
-# Insulin, BMI and Age
+# App Title and Description
+st.title("Diabetes Prediction Web Application")
+st.markdown(
+    """
+    ### Welcome! 🩺
+    This app predicts whether a person is diabetic or not based on input data. 
+    Please provide the necessary information below.
+    """
+)
 
-# When the user clicks 'Predict'
-if st.button('Predict'):
+# Sidebar Styling and Input Section
+st.sidebar.header("Input Features")
+st.sidebar.markdown("### Provide your health data:")
 
-        # Format the data for input into the model. For the model
-        # Supplied above, it should be a Pandas dataframe with four
-        # columns, one for each feature and one row.
+# Input Fields
+glucose = st.sidebar.number_input(
+    'Glucose Level (mg/dL)', min_value=0, max_value=300, step=1, value=100, help="Enter glucose level."
+)
+insulin = st.sidebar.number_input(
+    'Insulin Level (μIU/mL)', min_value=0, max_value=1000, step=1, value=50, help="Enter insulin level."
+)
+bmi = st.sidebar.number_input(
+    'Body Mass Index (BMI)', min_value=0.0, max_value=70.0, step=0.1, value=25.0, help="Enter BMI value."
+)
+age = st.sidebar.number_input(
+    'Age (years)', min_value=0, max_value=120, step=1, value=30, help="Enter your age."
+)
 
-        # Then do the prediction and covert the class number that the
-        # model returns to a human readable string, like 'diabetic' etc.
+# Input Data Frame
+input_data = pd.DataFrame({
+    'Glucose': [glucose],
+    'Insulin': [insulin],
+    'BMI': [bmi],
+    'Age': [age]
+})
 
-    # Display the prediction to the user
-    st.write('Prediction:', predicted_class)
+# Prediction Button
+st.markdown("---")
+if st.button("Predict"):
+    try:
+        # Prediction logic
+        prediction = model.predict(input_data)[0]
+        predicted_class = class_dict[prediction]
+
+        # Display Results
+        st.success(f"Prediction: {predicted_class}")
+        if prediction == 1:
+            st.warning("Consult a healthcare professional for further evaluation.")
+        else:
+            st.info("Maintain a healthy lifestyle to reduce risks.")
+    except Exception as e:
+        st.error(f"An error occurred while predicting: {e}")
+
+# Footer
+st.markdown("---")
+st.markdown(
+    """
+    ### Notes:
+    - Model trained with health-related data.
+    - Ensure input values are within reasonable ranges.
+    - Consult a healthcare provider for clinical advice.
+    """
+)
+
+# Styling with external CSS
+st.markdown(
+    """
+    <style>
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 5px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
